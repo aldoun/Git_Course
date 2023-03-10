@@ -1,0 +1,309 @@
+CCS PCM C Compiler, Version 5.015, 5967               18-Feb-23 15:22
+
+               Filename:   C:\Users\aldou\OneDrive\Desktop\embedded\Report1\Report_DC\DC.lst
+
+               ROM used:   140 words (7%)
+                           Largest free fragment is 1908
+               RAM used:   11 (5%) at main() level
+                           11 (5%) worst case
+               Stack used: 0 locations
+               Stack size: 8
+
+*
+0000:  MOVLW  00
+0001:  MOVWF  0A
+0002:  GOTO   004
+0003:  NOP
+.................... /* 
+....................  * Name: DC.c 
+....................  * Author: Mahmoud Adel 
+....................  * Description: This file contains main information of DC motor 
+....................  * Version: v1.0 
+....................  * */ 
+....................   
+.................... #include <16F628A.h> 
+.................... //////////// Standard Header file for the PIC16F628A device //////////////// 
+.................... /////////////////////////////////////////////////////////////////////////// 
+.................... ////        (C) Copyright 1996, 2013 Custom Computer Services          //// 
+.................... //// This source code may only be used by licensed users of the CCS C  //// 
+.................... //// compiler.  This source code may only be distributed to other      //// 
+.................... //// licensed users of the CCS C compiler.  No other use, reproduction //// 
+.................... //// or distribution is permitted without written permission.          //// 
+.................... //// Derivative programs created using this software in object code    //// 
+.................... //// form are not restricted in any way.                               //// 
+.................... /////////////////////////////////////////////////////////////////////////// 
+.................... #device PIC16F628A 
+....................  
+.................... #list 
+....................  
+.................... #fuses NOMCLR,NOWDT,NOPROTECT,INTRC_IO 
+.................... #use delay(clock=4M) 
+....................  
+.................... /*************Macros***************/ 
+.................... #define isPressed              FALSE 
+.................... #define isUnPressed            TRUE 
+.................... #define US                     PIN_B2 
+.................... #define DS                     PIN_B4 
+.................... #define CLOCK_WISE             PIN_B5 
+.................... #define COUNTER_CLOCK_WISE     PIN_B6 
+.................... #define limit                  8 
+.................... #define delay                  5 
+.................... /***********************************/ 
+....................  
+.................... int main() 
+0004:  MOVF   03,W
+0005:  ANDLW  1F
+0006:  MOVWF  03
+0007:  BSF    03.5
+0008:  BSF    0E.3
+0009:  MOVLW  07
+000A:  BCF    03.5
+000B:  MOVWF  1F
+000C:  BCF    03.7
+000D:  CLRF   21
+000E:  CLRF   22
+000F:  CLRF   23
+0010:  CLRF   24
+0011:  CLRF   25
+.................... { 
+....................       int8 c1=0; 
+....................       int8 c2=0; 
+....................       int8 c3=0; 
+....................       int8 c4=0; 
+....................       int8 speed=0; 
+....................        
+....................       Port_b_pullups(TRUE); 
+0012:  BSF    03.5
+0013:  BCF    01.7
+....................        
+....................       setup_timer_2 ( T2_DIV_BY_16, 0xFF, 2) ;    //F= 0.25 kHZ 
+0014:  MOVLW  08
+0015:  MOVWF  78
+0016:  IORLW  06
+0017:  BCF    03.5
+0018:  MOVWF  12
+0019:  MOVLW  FF
+001A:  BSF    03.5
+001B:  MOVWF  12
+....................       setup_ccp1(CCP_PWM); 
+001C:  BCF    06.3
+001D:  BCF    03.5
+001E:  BCF    06.3
+001F:  MOVLW  0C
+0020:  MOVWF  17
+....................       set_pwm1_duty(32); 
+0021:  MOVLW  20
+0022:  MOVWF  15
+....................        
+....................       output_high(PIN_B0); 
+0023:  BSF    03.5
+0024:  BCF    06.0
+0025:  BCF    03.5
+0026:  BSF    06.0
+....................       output_low(PIN_B1); 
+0027:  BSF    03.5
+0028:  BCF    06.1
+0029:  BCF    03.5
+002A:  BCF    06.1
+....................       //set_pwm1_duty(speed+=64); 
+....................        
+....................        
+....................       while(TRUE) 
+....................       { 
+....................              
+....................             //check if the switch of down speed is not pressed 
+....................             if(input(US)==isUnPressed) 
+002B:  BSF    03.5
+002C:  BSF    06.2
+002D:  BCF    03.5
+002E:  BTFSS  06.2
+002F:  GOTO   035
+....................             { 
+....................                      //check if the counter is less than the specific limit 
+....................                      if(c1<limit) c1++; 
+0030:  MOVF   21,W
+0031:  SUBLW  07
+0032:  BTFSC  03.0
+0033:  INCF   21,F
+....................             } 
+0034:  GOTO   043
+....................             //The action if the switch is pressed  
+....................             else 
+....................             { 
+....................                   //check if the counter is equal to the specific limit 
+....................                   if(c1==limit) 
+0035:  MOVF   21,W
+0036:  SUBLW  08
+0037:  BTFSS  03.2
+0038:  GOTO   042
+....................                   { 
+....................                         //looping until reach the maximum speed 
+....................                         if(speed<128){ 
+0039:  MOVF   25,W
+003A:  SUBLW  7F
+003B:  BTFSS  03.0
+003C:  GOTO   041
+....................                           set_pwm1_duty(speed+=16); 
+003D:  MOVLW  10
+003E:  ADDWF  25,F
+003F:  MOVF   25,W
+0040:  MOVWF  15
+....................                         } 
+....................                         else{ 
+....................                            /*Do nothing*/ 
+....................                         } 
+....................                     //ending of if condition     
+....................                   } 
+0041:  GOTO   042
+....................                   else{ 
+....................                      /*Do nothing*/ 
+....................                   } 
+....................                   c1=0; 
+0042:  CLRF   21
+....................                //ending of else 
+....................              } 
+....................          //check if the switch of down speed is not pressed 
+....................          if(input(DS)==isUnPressed) 
+0043:  BSF    03.5
+0044:  BSF    06.4
+0045:  BCF    03.5
+0046:  BTFSS  06.4
+0047:  GOTO   04D
+....................          { 
+....................                   //check if the counter is less than the specific limit 
+....................                   if(c2<limit) c2++; 
+0048:  MOVF   22,W
+0049:  SUBLW  07
+004A:  BTFSC  03.0
+004B:  INCF   22,F
+....................          } 
+004C:  GOTO   05A
+....................          //The action if the switch is pressed  
+....................          else 
+....................          { 
+....................                //check if the counter is equal to the specific limit 
+....................                if(c2==limit) 
+004D:  MOVF   22,W
+004E:  SUBLW  08
+004F:  BTFSS  03.2
+0050:  GOTO   059
+....................                { 
+....................                      //looping until reach the maximum speed 
+....................                      if(speed>0){ 
+0051:  MOVF   25,F
+0052:  BTFSC  03.2
+0053:  GOTO   058
+....................                        set_pwm1_duty(speed-=16); 
+0054:  MOVLW  10
+0055:  SUBWF  25,F
+0056:  MOVF   25,W
+0057:  MOVWF  15
+....................                      } 
+....................                      else{ 
+....................                         /*Do nothing*/ 
+....................                      } 
+....................                  //ending of if condition     
+....................                } 
+0058:  GOTO   059
+....................                else{ 
+....................                   /*Do nothing*/ 
+....................                } 
+....................                c2=0; 
+0059:  CLRF   22
+....................             //ending of else 
+....................           } 
+....................              
+....................          //check if the switch of down speed is not pressed 
+....................          if(input(CLOCK_WISE)==isUnPressed) 
+005A:  BSF    03.5
+005B:  BSF    06.5
+005C:  BCF    03.5
+005D:  BTFSS  06.5
+005E:  GOTO   064
+....................          { 
+....................                   //check if the counter is less than the specific limit 
+....................                   if(c3<limit) c3++; 
+005F:  MOVF   23,W
+0060:  SUBLW  07
+0061:  BTFSC  03.0
+0062:  INCF   23,F
+....................          } 
+0063:  GOTO   071
+....................          //The action if the switch is pressed  
+....................          else 
+....................          { 
+....................                //check if the counter is equal to the specific limit 
+....................                if(c3==limit) 
+0064:  MOVF   23,W
+0065:  SUBLW  08
+0066:  BTFSS  03.2
+0067:  GOTO   070
+....................                { 
+....................                      output_high(PIN_B0); 
+0068:  BSF    03.5
+0069:  BCF    06.0
+006A:  BCF    03.5
+006B:  BSF    06.0
+....................                      output_low(PIN_B1); 
+006C:  BSF    03.5
+006D:  BCF    06.1
+006E:  BCF    03.5
+006F:  BCF    06.1
+....................                } 
+....................                c3=0; 
+0070:  CLRF   23
+....................           } 
+....................        
+....................         //check if the switch of up speed is not pressed  
+....................         if(input(COUNTER_CLOCK_WISE)==isUnPressed) 
+0071:  BSF    03.5
+0072:  BSF    06.6
+0073:  BCF    03.5
+0074:  BTFSS  06.6
+0075:  GOTO   07B
+....................         { 
+....................                //check if the counter is less than the specific limit 
+....................                if(c4<limit)  c4++; 
+0076:  MOVF   24,W
+0077:  SUBLW  07
+0078:  BTFSC  03.0
+0079:  INCF   24,F
+....................         } 
+007A:  GOTO   088
+....................          //The action if the switch is pressed 
+....................          else 
+....................          { 
+....................                //check if the counter is equal to the specific limit 
+....................                if(c4==limit) 
+007B:  MOVF   24,W
+007C:  SUBLW  08
+007D:  BTFSS  03.2
+007E:  GOTO   087
+....................                { 
+....................                       output_high(PIN_B1); 
+007F:  BSF    03.5
+0080:  BCF    06.1
+0081:  BCF    03.5
+0082:  BSF    06.1
+....................                       output_low(PIN_B0); 
+0083:  BSF    03.5
+0084:  BCF    06.0
+0085:  BCF    03.5
+0086:  BCF    06.0
+....................                } 
+....................                c4=0; 
+0087:  CLRF   24
+....................          } 
+0088:  GOTO   02B
+....................        //ending of loop 
+....................    } 
+....................        
+....................       return 0; 
+0089:  MOVLW  00
+008A:  MOVWF  78
+.................... } 
+....................  
+008B:  SLEEP
+
+Configuration Fuses:
+   Word  1: 3F50   NOWDT PUT INTRC_IO NOMCLR BROWNOUT NOLVP NOCPD NOPROTECT
